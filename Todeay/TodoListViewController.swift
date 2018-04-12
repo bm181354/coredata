@@ -10,25 +10,35 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-    
     var itemArray = ["Watch Liverpool", "Buy milk", "Meditate"]
 
+    // objective-interface
+    let defaults = UserDefaults.standard
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        //itemArray = defaults.value(forKey: "todoItemCell")  as! [String]
+        if let items = defaults.array(forKey: "toDoArray") as? [String]{
+            itemArray = items
+        }
     }
     
     
-    //MARK - Add New Items and create alert 
+    //MARK - Add New Items and create alert
     
     @IBAction func addBtnPressed(_ sender: UIBarButtonItem) {
         
         
         var localString = UITextField()
+        
         let alert: UIAlertController = UIAlertController(title: "Add New Item", message: "", preferredStyle: .alert)
         
         let action:UIAlertAction = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            
+
             self.itemArray.append(localString.text!)
+            self.defaults.set(self.itemArray, forKey: "toDoArray")
+            
             self.tableView.reloadData()
             
         }
@@ -39,6 +49,7 @@ class TodoListViewController: UITableViewController {
             localString = textField
             
         }
+        
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
         
@@ -60,7 +71,7 @@ extension TodoListViewController {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "todoItemCell", for: indexPath)
         cell.textLabel?.text = itemArray[indexPath.row]
-        
+    
         return cell
     }
     
