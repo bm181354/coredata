@@ -1,8 +1,8 @@
-# Application on Core-data
+# Application on Core-data [iOS]
 
 Module used:
 
 - Coredata
 - Cocopod
 - Realm
-- SharedPreference / UserDefaults
+- SharedPreference [similar lingo Android] / UserDefaults [iOS]
