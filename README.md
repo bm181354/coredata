@@ -2,7 +2,7 @@
 
 Module used:
 
-Coredata
-Cocopod
-Realm
-SharedPreference
+- Coredata
+- Cocopod
+- Realm
+- SharedPreference / UserDefaults
