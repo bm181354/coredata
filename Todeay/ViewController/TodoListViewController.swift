@@ -7,12 +7,15 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
 
     var itemArray = ["Watch Liverpool", "Buy milk", "Meditate"]
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
-    fileprivate let fileDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
+    //fileprivate let fileDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
     
     var items = [Item]()
     
@@ -21,15 +24,7 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
- 
-        //print(fileDir)
-        
-        //itemArray = defaults.value(forKey: "todoItemCell")  as! [String]
-//        if let items = defaults.array(forKey: "toDoArray") as? [String]{
-//            itemArray = items
-//        }
         toLoad()
-        
     }
     
     
@@ -46,7 +41,11 @@ class TodoListViewController: UITableViewController {
 
             //self.itemArray.append(localString.text!)
             
-            let item = Item(value: localString.text!)
+            // UI application static variable and getting the persistentContainer
+            
+            let item = Item(context: self.context)
+            item.value = localString.text!
+            item.flag = false
             self.items.append(item)
             
             // encodes data and saves to the application hardware
@@ -86,17 +85,24 @@ extension TodoListViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         // check mark accessory in the cell [usually hidden]
-        if items[indexPath.row].flag! == true {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-            items[indexPath.row].flag = !items[indexPath.row].flag!
-            toSave()
-            
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-            items[indexPath.row].flag = !items[indexPath.row].flag!
-            toSave()
-        }
         
+        context.delete(items[indexPath.row])
+        items.remove(at: indexPath.row)
+        toSave()
+        
+        
+        
+//        if items[indexPath.row].flag == true {
+//            tableView.cellForRow(at: indexPath)?.accessoryType = .none
+//            items[indexPath.row].flag = !items[indexPath.row].flag
+//            toSave()
+//            
+//        } else {
+//            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+//            items[indexPath.row].flag = !items[indexPath.row].flag
+//            toSave()
+//        }
+//        
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -105,27 +111,32 @@ extension TodoListViewController {
     // MARK:- encode items array into plist or json here
     func toSave(){
         
-        let encoder = PropertyListEncoder()
-        
         do {
-            let data = try encoder.encode(self.items)
-            try data.write(to:self.fileDir!)
+           try context.save()
         }catch{
+            
             print("Error")
+            
         }
         
         self.tableView.reloadData()
         
     }
     
+
     func toLoad(){
-        if let data = try? Data(contentsOf:self.fileDir!){
-            let decoder = PropertyListDecoder()
-            do {
-                items = try decoder.decode([Item].self, from: data)
-                }catch{}
-            }
+        // Item is a class/entity
+        let request:NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+        // returns array  of Item
+        items =  try context.fetch(request)
+            
+        }catch {
+            print("Error is \(error)")
+        }
+   
     }
+
     
     
     
