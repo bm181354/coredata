@@ -12,16 +12,24 @@ class TodoListViewController: UITableViewController {
 
     var itemArray = ["Watch Liverpool", "Buy milk", "Meditate"]
 
+    fileprivate let fileDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
+    
+    var items = [Item]()
+    
     // objective-interface
     let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
+ 
+        //print(fileDir)
         
         //itemArray = defaults.value(forKey: "todoItemCell")  as! [String]
-        if let items = defaults.array(forKey: "toDoArray") as? [String]{
-            itemArray = items
-        }
+//        if let items = defaults.array(forKey: "toDoArray") as? [String]{
+//            itemArray = items
+//        }
+        toLoad()
+        
     }
     
     
@@ -36,10 +44,14 @@ class TodoListViewController: UITableViewController {
         
         let action:UIAlertAction = UIAlertAction(title: "Add Item", style: .default) { (action) in
 
-            self.itemArray.append(localString.text!)
-            self.defaults.set(self.itemArray, forKey: "toDoArray")
+            //self.itemArray.append(localString.text!)
             
-            self.tableView.reloadData()
+            let item = Item(value: localString.text!)
+            self.items.append(item)
+            
+            // encodes data and saves to the application hardware
+            self.toSave()
+
             
         }
         
@@ -60,35 +72,60 @@ class TodoListViewController: UITableViewController {
 extension TodoListViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return items.count
     }
     
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "todoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row]
-    
+        cell.textLabel?.text = items[indexPath.row].value
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        print(itemArray[indexPath.row])
-        
-        
         // check mark accessory in the cell [usually hidden]
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
+        if items[indexPath.row].flag! == true {
             tableView.cellForRow(at: indexPath)?.accessoryType = .none
+            items[indexPath.row].flag = !items[indexPath.row].flag!
+            toSave()
             
         } else {
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+            items[indexPath.row].flag = !items[indexPath.row].flag!
+            toSave()
         }
         
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    
+    // MARK:- encode items array into plist or json here
+    func toSave(){
+        
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(self.items)
+            try data.write(to:self.fileDir!)
+        }catch{
+            print("Error")
+        }
+        
+        self.tableView.reloadData()
+        
+    }
+    
+    func toLoad(){
+        if let data = try? Data(contentsOf:self.fileDir!){
+            let decoder = PropertyListDecoder()
+            do {
+                items = try decoder.decode([Item].self, from: data)
+                }catch{}
+            }
+    }
     
     
     
